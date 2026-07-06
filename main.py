@@ -1,6 +1,6 @@
 from importlib import _bootstrap_external
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse, FileResponse
 from typing import Dict, Optional
 import uvicorn
 from pydantic import BaseModel, HttpUrl
@@ -18,7 +18,7 @@ import jwt
 from security import SECRET_KEY, ALGORITHM
 import qrcode
 import io
-from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -27,6 +27,19 @@ from database import get_db, redis_client, db_pool
 from fastapi import Depends, BackgroundTasks
 
 oauth2_scheme=OAuth2PasswordBearer(tokenUrl="token")
+
+limiter = Limiter(key_func=get_remote_address)
+app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Mount the static directory for the Frontend UI
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def serve_frontend():
+    return FileResponse("static/index.html")
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
