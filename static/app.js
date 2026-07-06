@@ -106,11 +106,7 @@ logoutBtn.addEventListener("click", () => {
 async function fetchAnalytics() {
     const token = localStorage.getItem("token");
     try {
-        // Since we don't have a "fetch all links" endpoint directly, we fetch analytics for a dummy short_id to get dashboard data
-        // Wait, our /analytics/{short_id} endpoint returns the dashboard data for the whole user!
-        // We can just hit /analytics/dummy (it doesn't matter what short_id we pass because the backend queries by user_id)
-        
-        const res = await fetch(`${API_BASE}/analytics/dummy`, {
+        const res = await fetch(`${API_BASE}/dashboard`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
         
