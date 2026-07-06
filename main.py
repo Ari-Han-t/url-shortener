@@ -29,7 +29,7 @@ from fastapi import Depends, BackgroundTasks
 oauth2_scheme=OAuth2PasswordBearer(tokenUrl="token")
 
 limiter = Limiter(key_func=get_remote_address)
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
