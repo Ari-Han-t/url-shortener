@@ -130,7 +130,21 @@ def shorten(request: Request, url:URLCreate, current_username: str=Depends(get_c
     conn.commit()
     return {"Long Url": str(url.long_url), "Short_ID": short_id}
 
-        
+@app.get("/dashboard")
+def get_dashboard(current_username: str = Depends(get_current_user), conn=Depends(get_db)):
+    cursor=conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = %s", (current_username,))
+    user_id = cursor.fetchone()[0]
+    cursor.execute("SELECT short_id, long_url, clicks FROM urls WHERE user_id = %s", (user_id,))
+    urls = cursor.fetchall()
+    
+    cursor.execute("SELECT COUNT(*) FROM click_events WHERE short_id IN (SELECT short_id FROM urls WHERE user_id = %s)", (user_id,))
+    total_clicks_result = cursor.fetchone()
+    total_clicks = total_clicks_result[0] if total_clicks_result else 0
+    
+    dashboard_data = [{"Short ID": u[0], "Long URL": u[1], "Total Clicks": u[2]} for u in urls]
+    return {"Total Network Clicks": total_clicks, "Dashboard": dashboard_data}
+
 # This function runs silently in the background AFTER the user has already been redirected!
 def record_click_in_background(short_id: str, ip_address: str, user_agent: str):
     conn = db_pool.getconn()
@@ -188,20 +202,6 @@ def get_analytics(short_id:str, current_username: str= Depends(get_current_user)
 
     return {"Short ID": short_id, "Long URL": result[1], "Total Clicks": result[0], "History":click_data}
 
-@app.get("/dashboard")
-def get_dashboard(current_username: str = Depends(get_current_user), conn=Depends(get_db)):
-    cursor=conn.cursor()
-    cursor.execute("SELECT id FROM users WHERE username = %s", (current_username,))
-    user_id = cursor.fetchone()[0]
-    cursor.execute("SELECT short_id, long_url, clicks FROM urls WHERE user_id = %s", (user_id,))
-    urls = cursor.fetchall()
-    
-    cursor.execute("SELECT COUNT(*) FROM click_events WHERE short_id IN (SELECT short_id FROM urls WHERE user_id = %s)", (user_id,))
-    total_clicks_result = cursor.fetchone()
-    total_clicks = total_clicks_result[0] if total_clicks_result else 0
-    
-    dashboard_data = [{"Short ID": u[0], "Long URL": u[1], "Total Clicks": u[2]} for u in urls]
-    return {"Total Network Clicks": total_clicks, "Dashboard": dashboard_data}
 
 @app.get("/qrcode/{short_id}")
 def get_qr_code(short_id:str, conn=Depends(get_db)):
