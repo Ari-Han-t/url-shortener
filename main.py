@@ -28,17 +28,6 @@ from fastapi import Depends, BackgroundTasks
 
 oauth2_scheme=OAuth2PasswordBearer(tokenUrl="token")
 
-limiter = Limiter(key_func=get_remote_address)
-app = FastAPI()
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-# Mount the static directory for the Frontend UI
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def serve_frontend():
-    return FileResponse("static/index.html")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -78,12 +67,12 @@ limiter=Limiter(key_func=get_remote_address)
 app.state.limiter=limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-
-
+# Mount the static directory for the Frontend UI
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
-def home():
-    return {"message":"Welcome to the URL Shortener API"}
+def serve_frontend():
+    return FileResponse("static/index.html")
 
 @app.post("/register")
 def register(user:UserCreate, conn=Depends(get_db)):
