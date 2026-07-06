@@ -1,0 +1,11 @@
+python-dotenv
+FastAPI
+Uvicorn
+passlib
+bcrypt==3.2.2
+PyJWT
+python-multipart
+qrcode[pil]
+slowapi
+psycopg2-binary
+redis
