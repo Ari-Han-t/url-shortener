@@ -9,3 +9,4 @@ qrcode[pil]
 slowapi
 psycopg2-binary
 redis
+Pillow==10.2.0

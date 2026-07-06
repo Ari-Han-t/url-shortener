@@ -23,6 +23,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from database import get_db, redis_client, db_pool
+from PIL import Image
+import os
 
 from fastapi import Depends, BackgroundTasks
 
@@ -212,7 +214,39 @@ def get_qr_code(short_id:str, conn=Depends(get_db)):
         raise HTTPException(status_code=404, detail="Url not found")
         
     full_url = f"http://127.0.0.1:8000/{short_id}"
-    qr_img = qrcode.make(full_url)
+    
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(full_url)
+    qr.make(fit=True)
+    
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+    
+    logo_path = "logo.png"
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path)
+        # Calculate size for logo
+        box = (
+            (qr_img.size[0] - logo.size[0]) // 2,
+            (qr_img.size[1] - logo.size[1]) // 2
+        )
+        # Resize logo if it's too big (max 25% of QR code size)
+        max_logo_size = int(qr_img.size[0] * 0.25)
+        logo = logo.resize((max_logo_size, max_logo_size), Image.Resampling.LANCZOS)
+        
+        # Recalculate position
+        box = (
+            (qr_img.size[0] - max_logo_size) // 2,
+            (qr_img.size[1] - max_logo_size) // 2
+        )
+        # Convert logo to RGBA to handle transparency, then paste
+        logo = logo.convert("RGBA")
+        qr_img.paste(logo, box, logo)
+
     img_byte_arr = io.BytesIO()
     qr_img.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
