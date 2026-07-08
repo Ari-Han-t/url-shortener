@@ -4,6 +4,8 @@ import jwt
 import qrcode
 import secrets
 import logging
+import hashlib
+from user_agents import parse
 from PIL import Image
 from typing import Dict, Optional
 from datetime import datetime
@@ -225,11 +227,21 @@ def get_dashboard(current_username: str = Depends(get_current_user), conn=Depend
     dashboard_data = [{"Short ID": u[0], "Long URL": u[1], "Total Clicks": u[2]} for u in urls]
     return {"success": True, "data": {"Total Network Clicks": total_clicks, "Dashboard": dashboard_data}}
 
-def record_click_in_background(short_id: str, ip_address: str, user_agent: str):
+def record_click_in_background(short_id: str, ip_address: str, user_agent: str, referer: str):
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO click_events (short_id, ip_address, user_agent) VALUES (%s, %s, %s)", (short_id, ip_address, user_agent))
+        hashed_ip = hashlib.sha256(ip_address.encode('utf-8')).hexdigest()
+        
+        ua = parse(user_agent)
+        browser = ua.browser.family
+        os = ua.os.family
+        device_type = "Mobile" if ua.is_mobile else "Tablet" if ua.is_tablet else "PC" if ua.is_pc else "Unknown"
+        
+        cursor.execute(
+            "INSERT INTO click_events (short_id, ip_address, user_agent, browser, os, device_type, referer) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (short_id, hashed_ip, user_agent, browser, os, device_type, referer)
+        )
         cursor.execute("UPDATE urls SET clicks = clicks + 1 WHERE short_id = %s", (short_id,))
         conn.commit()
         cursor.close()
@@ -246,10 +258,11 @@ def redirect_to_url(short_id: str, request: Request, background_tasks: Backgroun
 
     ip_address = get_real_ip(request)
     user_agent = request.headers.get("user-agent", "Unknown")
+    referer = request.headers.get("referer", "Direct")
 
     cached_url = redis_client.get(short_id)
     if cached_url:
-        background_tasks.add_task(record_click_in_background, short_id, ip_address, user_agent)
+        background_tasks.add_task(record_click_in_background, short_id, ip_address, user_agent, referer)
         return RedirectResponse(url=cached_url)
 
     cursor = conn.cursor()
@@ -262,7 +275,7 @@ def redirect_to_url(short_id: str, request: Request, background_tasks: Backgroun
     long_url = long_url_row[0]
     redis_client.setex(short_id, 3600, long_url)
 
-    background_tasks.add_task(record_click_in_background, short_id, ip_address, user_agent)
+    background_tasks.add_task(record_click_in_background, short_id, ip_address, user_agent, referer)
     
     return RedirectResponse(url=long_url)
 
@@ -278,9 +291,16 @@ def get_analytics(short_id: str, request: Request, current_username: str = Depen
     if not result:
         raise HTTPException(status_code=404, detail="Url Not Found or You don't own the Url")
 
-    cursor.execute("SELECT timestamp, ip_address, user_agent FROM click_events WHERE short_id = %s ORDER BY timestamp DESC LIMIT 50", (short_id,))
+    cursor.execute("SELECT timestamp, ip_address, device_type, os, browser, referer FROM click_events WHERE short_id = %s ORDER BY timestamp DESC LIMIT 500", (short_id,))
     events = cursor.fetchall()
-    click_data = [{"timestamp": e[0].isoformat() if e[0] else None, "ip": e[1], "browser": e[2]} for e in events]
+    click_data = [{
+        "timestamp": e[0].isoformat() if e[0] else None, 
+        "ip_hash": e[1], 
+        "device_type": e[2] or "Unknown",
+        "os": e[3] or "Unknown",
+        "browser": e[4] or "Unknown",
+        "referer": e[5] or "Direct"
+    } for e in events]
 
     return {"success": True, "data": {"Short ID": short_id, "Long URL": result[1], "Total Clicks": result[0], "History": click_data}}
 

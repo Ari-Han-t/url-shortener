@@ -366,6 +366,9 @@ function Dashboard({ token }: { token: string }) {
   const [customAlias, setCustomAlias] = useState('')
   const [isShortening, setIsShortening] = useState(false)
   const [search, setSearch] = useState('')
+  const [analyticsId, setAnalyticsId] = useState<string | null>(null)
+  const [analyticsData, setAnalyticsData] = useState<any[] | null>(null)
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false)
 
   const fetchDashboard = async () => {
     try {
@@ -391,6 +394,32 @@ function Dashboard({ token }: { token: string }) {
   useEffect(() => {
     fetchDashboard()
   }, [token])
+
+  useEffect(() => {
+    if (!analyticsId) {
+      setAnalyticsData(null)
+      return
+    }
+    const fetchAnalytics = async () => {
+      setIsAnalyticsLoading(true)
+      try {
+        const res = await fetch(`${API_BASE}/analytics/${analyticsId}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        })
+        const data = await res.json()
+        if (data.success) {
+          setAnalyticsData(data.data.History)
+        } else {
+          toast.error("Failed to load analytics")
+        }
+      } catch (err) {
+        toast.error("Network error loading analytics")
+      } finally {
+        setIsAnalyticsLoading(false)
+      }
+    }
+    fetchAnalytics()
+  }, [analyticsId, token])
 
   const handleShorten = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -553,7 +582,10 @@ function Dashboard({ token }: { token: string }) {
                         <td className="px-6 py-4 text-right font-medium">
                           {link["Total Clicks"]}
                         </td>
-                        <td className="px-6 py-4 text-right">
+                        <td className="px-6 py-4 text-right space-x-2">
+                          <Button variant="ghost" size="icon" onClick={() => setAnalyticsId(link["Short ID"])} title="View Analytics">
+                            <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => copyToClipboard(shortUrl)} title="Copy URL">
                             <Copy className="h-4 w-4 text-muted-foreground" />
                           </Button>
@@ -567,6 +599,60 @@ function Dashboard({ token }: { token: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {analyticsId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl border-border">
+            <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+              <div>
+                <CardTitle>Analytics for /{analyticsId}</CardTitle>
+                <CardDescription>Detailed click log</CardDescription>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setAnalyticsId(null)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </Button>
+            </CardHeader>
+            <CardContent className="overflow-auto p-0">
+              {isAnalyticsLoading ? (
+                <div className="flex justify-center p-12 text-muted-foreground">Loading analytics...</div>
+              ) : !analyticsData || analyticsData.length === 0 ? (
+                <div className="flex justify-center p-12 text-muted-foreground">No clicks yet.</div>
+              ) : (
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase text-muted-foreground bg-muted/50 border-b border-border sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Time</th>
+                      <th className="px-4 py-3 font-medium">Device</th>
+                      <th className="px-4 py-3 font-medium">OS</th>
+                      <th className="px-4 py-3 font-medium">Browser</th>
+                      <th className="px-4 py-3 font-medium">Referer</th>
+                      <th className="px-4 py-3 font-medium">IP Hash</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {analyticsData.map((log, i) => (
+                      <tr key={i} className="hover:bg-muted/30">
+                        <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">{log.device_type}</td>
+                        <td className="px-4 py-3">{log.os}</td>
+                        <td className="px-4 py-3">{log.browser}</td>
+                        <td className="px-4 py-3 text-muted-foreground max-w-[150px] truncate" title={log.referer}>
+                          {log.referer}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs font-mono">
+                          {log.ip_hash.substring(0, 16)}...
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

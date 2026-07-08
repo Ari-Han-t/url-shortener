@@ -47,8 +47,35 @@ def init_db():
         short_id TEXT REFERENCES urls(short_id), 
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
         ip_address TEXT, 
-        user_agent TEXT
+        user_agent TEXT,
+        browser TEXT,
+        os TEXT,
+        device_type TEXT,
+        referer TEXT
     )''')
+    
+    # Safe migration: Add new columns if they don't exist for existing databases
+    cursor.execute('''
+    DO $$ 
+    BEGIN 
+        BEGIN
+            ALTER TABLE click_events ADD COLUMN browser TEXT;
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END;
+        BEGIN
+            ALTER TABLE click_events ADD COLUMN os TEXT;
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END;
+        BEGIN
+            ALTER TABLE click_events ADD COLUMN device_type TEXT;
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END;
+        BEGIN
+            ALTER TABLE click_events ADD COLUMN referer TEXT;
+        EXCEPTION WHEN duplicate_column THEN NULL;
+        END;
+    END $$;
+    ''')
     
     # Performance Indexes
     cursor.execute('''CREATE INDEX IF NOT EXISTS idx_urls_long_url ON urls(long_url)''')
