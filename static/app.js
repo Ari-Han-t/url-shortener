@@ -2,6 +2,18 @@
 let isLoginMode = true;
 const API_BASE = ""; // Relative to the same domain
 
+// Security
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+    }[tag]));
+}
+
 // DOM Elements
 const authSection = document.getElementById("authSection");
 const dashboardSection = document.getElementById("dashboardSection");
@@ -127,14 +139,17 @@ async function fetchAnalytics() {
         tbody.innerHTML = "";
         
         links.forEach(link => {
-            const shortUrl = `${window.location.origin}/${link["Short ID"]}`;
+            const safeShortId = escapeHTML(link["Short ID"]);
+            const safeLongUrl = escapeHTML(link["Long URL"]);
+            const shortUrl = `${window.location.origin}/${safeShortId}`;
+            
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td><a href="${shortUrl}" target="_blank">${link["Short ID"]}</a></td>
-                <td><span style="max-width: 200px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${link["Long URL"]}</span></td>
-                <td>${link["Total Clicks"]}</td>
+                <td><a href="${shortUrl}" target="_blank">${safeShortId}</a></td>
+                <td><span style="max-width: 200px; display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${safeLongUrl}</span></td>
+                <td>${escapeHTML(link["Total Clicks"])}</td>
                 <td>
-                    <button class="qr-btn" onclick="openQrModal('${link["Short ID"]}')">QR</button>
+                    <button class="qr-btn" onclick="openQrModal('${safeShortId}')">QR</button>
                 </td>
             `;
             tbody.appendChild(tr);

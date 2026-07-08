@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse, StreamingResponse, FileResponse
 from typing import Dict, Optional
 import uvicorn
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, HttpUrl, Field
 import secrets
 from contextlib import asynccontextmanager
 from database import init_db
@@ -46,7 +46,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 class URLCreate(BaseModel):
     long_url: HttpUrl
-    custom_id: Optional[str]=None
+    custom_id: Optional[str] = Field(default=None, pattern="^[a-zA-Z0-9_-]+$")
 
 class UserCreate(BaseModel):
     username:str
@@ -189,24 +189,27 @@ def redirect_to_url(short_id: str, request: Request, background_tasks: Backgroun
 
 
 @app.get("/analytics/{short_id}")
-def get_analytics(short_id:str, current_username: str= Depends(get_current_user), conn=Depends(get_db)):
+@limiter.limit("10/minute")
+def get_analytics(short_id:str, request: Request, current_username: str= Depends(get_current_user), conn=Depends(get_db)):
     cursor=conn.cursor()
     cursor.execute("SELECT id FROM users WHERE username = %s", (current_username,))
     user_id = cursor.fetchone()[0]
     cursor.execute("SELECT clicks, long_url FROM urls WHERE short_id = %s AND user_id = %s", (short_id, user_id))
     result = cursor.fetchone()
-    cursor.execute("SELECT timestamp, ip_address, user_agent FROM click_events WHERE short_id = %s", (short_id,))
-    events = cursor.fetchall()
-    click_data = [{"timestamp": e[0], "ip": e[1], "browser": e[2]} for e in events]
 
     if not result:
         raise HTTPException(status_code=404,detail="Url Not Found or You don't own the Url")
+
+    cursor.execute("SELECT timestamp, ip_address, user_agent FROM click_events WHERE short_id = %s", (short_id,))
+    events = cursor.fetchall()
+    click_data = [{"timestamp": e[0], "ip": e[1], "browser": e[2]} for e in events]
 
     return {"Short ID": short_id, "Long URL": result[1], "Total Clicks": result[0], "History":click_data}
 
 
 @app.get("/qrcode/{short_id}")
-def get_qr_code(short_id:str, conn=Depends(get_db)):
+@limiter.limit("10/minute")
+def get_qr_code(short_id:str, request: Request, conn=Depends(get_db)):
     cursor=conn.cursor()
     cursor.execute("SELECT long_url FROM urls where short_id=%s",(short_id,))
     long_url=cursor.fetchone()
