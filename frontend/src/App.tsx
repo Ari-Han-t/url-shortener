@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Link, Zap, BarChart2, Shield, Server, 
+import {
+  Link, Zap, BarChart2, Shield, Server,
   MonitorSmartphone, Copy, Search,
   ChevronDown, ExternalLink, ArrowRight, Share2, ArrowLeft
 } from 'lucide-react'
@@ -32,7 +32,7 @@ export default function App() {
     if (view === 'terms') return <LegalPage title="Terms of Service" onBack={() => setView('home')} content="This is a template Terms of Service. By using Short.io you agree to not shorten links to malicious, illegal, or abusive content. We reserve the right to terminate accounts that violate these terms." />
     if (view === 'cookies') return <LegalPage title="Cookie Policy" onBack={() => setView('home')} content="This is a template Cookie Policy. We use a single JWT token in your LocalStorage to keep you authenticated. We do not use third-party tracking cookies." />
     if (view === 'disclaimer') return <LegalPage title="Disclaimer" onBack={() => setView('home')} content="This is a template Disclaimer. Short.io is provided 'as is' without warranties of any kind. We are not responsible for the content of the websites you are redirected to." />
-    
+
     return token ? <Dashboard token={token} /> : <LandingPage setToken={setToken} />
   }
 
@@ -52,8 +52,8 @@ function Navbar({ token, setToken, setView }: { token: string | null, setToken: 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-        <div 
-          className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer" 
+        <div
+          className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer"
           onClick={() => setView('home')}
         >
           <Link className="h-6 w-6 text-primary" />
@@ -86,7 +86,7 @@ function LegalPage({ title, content, onBack }: { title: string, content: string,
         <p className="text-lg leading-relaxed text-muted-foreground">{content}</p>
         <div className="mt-12 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
           <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">
-            Note: This is a placeholder document. You must replace this with a legally binding document before launching the product.
+            Note: This is a placeholder document.
           </p>
         </div>
       </div>
@@ -116,7 +116,7 @@ function LandingPage({ setToken }: { setToken: (t: string) => void }) {
               </Button>
             </div>
           </div>
-          
+
           {/* Mock Browser Window */}
           <div className="relative mx-auto w-full max-w-lg hidden lg:block">
             <div className="rounded-xl border border-border/50 bg-card shadow-2xl overflow-hidden">
@@ -234,10 +234,10 @@ function LandingPage({ setToken }: { setToken: (t: string) => void }) {
 
 function FaqItem({ question, answer }: { question: string, answer: string }) {
   const [isOpen, setIsOpen] = useState(false)
-  
+
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">
-      <button 
+      <button
         className="w-full px-6 py-4 flex justify-between items-center focus:outline-none focus-visible:bg-muted/50"
         onClick={() => setIsOpen(!isOpen)}
       >
@@ -246,7 +246,7 @@ function FaqItem({ question, answer }: { question: string, answer: string }) {
       </button>
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -271,20 +271,20 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
       if (isLogin) {
         const formData = new URLSearchParams()
         formData.append("username", username)
         formData.append("password", password)
-        
+
         const res = await fetch(`${API_BASE}/token`, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
           body: formData.toString()
         })
         const data = await res.json()
-        
+
         // OAuth2 format returns token directly, or error
         if (res.ok) {
           toast.success("Welcome back!")
@@ -300,7 +300,7 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
           body: JSON.stringify({ username, password })
         })
         const data = await res.json()
-        
+
         if (data.success || res.ok) {
           toast.success("Account created! Please log in.")
           setIsLogin(true)
@@ -327,20 +327,20 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
       </CardHeader>
       <CardContent>
         <div className="flex p-1 bg-muted rounded-lg mb-6">
-          <button 
+          <button
             className={cn("flex-1 py-1.5 text-sm font-medium rounded-md transition-colors", isLogin ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
             onClick={() => setIsLogin(true)}
           >
             Log In
           </button>
-          <button 
+          <button
             className={cn("flex-1 py-1.5 text-sm font-medium rounded-md transition-colors", !isLogin ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
             onClick={() => setIsLogin(false)}
           >
             Register
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium leading-none">Username</label>
@@ -395,21 +395,21 @@ function Dashboard({ token }: { token: string }) {
   const handleShorten = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsShortening(true)
-    
+
     try {
       const payload: any = { long_url: longUrl }
       if (customAlias) payload.custom_id = customAlias
 
       const res = await fetch(`${API_BASE}/shorten`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       })
       const respData = await res.json()
-      
+
       if (respData.success) {
         toast.success("Link successfully shortened!")
         setLongUrl('')
@@ -449,7 +449,7 @@ function Dashboard({ token }: { token: string }) {
     }
   }
 
-  const filteredHistory = history.filter(h => 
+  const filteredHistory = history.filter(h =>
     h["Short ID"].includes(search) || h["Long URL"].toLowerCase().includes(search.toLowerCase())
   )
 
@@ -482,16 +482,16 @@ function Dashboard({ token }: { token: string }) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleShorten} className="flex flex-col md:flex-row gap-4">
-            <Input 
-              required 
-              type="url" 
-              placeholder="https://very-long-url.com/xyz" 
+            <Input
+              required
+              type="url"
+              placeholder="https://very-long-url.com/xyz"
               className="flex-[2] bg-background"
               value={longUrl}
               onChange={e => setLongUrl(e.target.value)}
             />
-            <Input 
-              placeholder="Custom alias (optional)" 
+            <Input
+              placeholder="Custom alias (optional)"
               className="flex-1 bg-background"
               value={customAlias}
               onChange={e => setCustomAlias(e.target.value)}
@@ -511,8 +511,8 @@ function Dashboard({ token }: { token: string }) {
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search links..." 
+            <Input
+              placeholder="Search links..."
               className="pl-9"
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -585,8 +585,8 @@ function Footer({ setView }: { setView: (v: View) => void }) {
           <button onClick={() => setView('terms')} className="hover:text-foreground transition-colors cursor-pointer">Terms of Service</button>
           <button onClick={() => setView('cookies')} className="hover:text-foreground transition-colors cursor-pointer">Cookie Policy</button>
           <button onClick={() => setView('disclaimer')} className="hover:text-foreground transition-colors cursor-pointer">Disclaimer</button>
-          <a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 ml-4">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.2c3-.3 6-1.5 6-6.5 0-1.4-.5-2.5-1.5-3.4.1-.3.6-1.6-.1-3.4 0 0-1.2-.4-3.9 1.4a12.3 12.3 0 0 0-7 0C6.2 2.7 5 3.1 5 3.1c-.7 1.8-.2 3.1-.1 3.4-1 .9-1.5 2-1.5 3.4 0 5 3 6.2 6 6.5a4.8 4.8 0 0 0-1 3.2v4"/><path d="M9 18c-4.5 1.5-5-2.5-7-3"/></svg> GitHub
+          <a href="https://github.com/Ari-Han-t/url-shortener" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1 ml-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.2c3-.3 6-1.5 6-6.5 0-1.4-.5-2.5-1.5-3.4.1-.3.6-1.6-.1-3.4 0 0-1.2-.4-3.9 1.4a12.3 12.3 0 0 0-7 0C6.2 2.7 5 3.1 5 3.1c-.7 1.8-.2 3.1-.1 3.4-1 .9-1.5 2-1.5 3.4 0 5 3 6.2 6 6.5a4.8 4.8 0 0 0-1 3.2v4" /><path d="M9 18c-4.5 1.5-5-2.5-7-3" /></svg> GitHub
           </a>
         </div>
         <div>
@@ -600,7 +600,7 @@ function Footer({ setView }: { setView: (v: View) => void }) {
 function LockIcon(props: any) {
   return (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      <rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
     </svg>
   )
 }
