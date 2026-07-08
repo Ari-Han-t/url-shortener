@@ -4,183 +4,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Shortener | Premium</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>URL Shortener | Enterprise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-    <!-- Background Elements -->
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-
-    <!-- Navigation -->
-    <nav class="glass-nav">
+    <!-- Minimal Navigation -->
+    <nav class="saas-nav">
         <div class="nav-content">
             <h1 class="logo">Short.<span>io</span></h1>
-            <ul class="nav-links">
-                <li><a href="#home">Home</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="#app" class="btn-nav">Dashboard</a></li>
-            </ul>
             <button id="logoutBtn" class="btn-secondary hidden">Logout</button>
         </div>
     </nav>
 
-    <main>
-        <!-- Hero Section -->
-        <header id="home" class="hero-section">
-            <div class="hero-content glass-card">
-                <h2 class="hero-title">Shorten, Share, and <span>Analyze</span></h2>
-                <p class="hero-subtitle">Transform your long, ugly links into sleek, trackable URLs in seconds. Built for creators, businesses, and developers.</p>
-                <a href="#app" class="btn-primary hero-btn">Get Started for Free</a>
-            </div>
-        </header>
+    <main class="main-container">
 
-        <!-- Features Section -->
-        <section id="features" class="container section-padding">
-            <div class="section-header text-center">
-                <h2>Why Choose Short.io?</h2>
-                <p>Everything you need to manage your links in one place.</p>
-            </div>
-            <div class="features-grid">
-                <div class="glass-card feature-card">
-                    <div class="feature-icon">🚀</div>
-                    <h3>Lightning Fast</h3>
-                    <p>Powered by Redis caching, our redirects happen in milliseconds, ensuring you never lose a click to loading times.</p>
-                </div>
-                <div class="glass-card feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Deep Analytics</h3>
-                    <p>Track exactly how many people click your links in real-time right from your centralized dashboard.</p>
-                </div>
-                <div class="glass-card feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Custom Branding</h3>
-                    <p>Create memorable, custom alias URLs and instantly generate premium QR codes for your physical marketing.</p>
-                </div>
-            </div>
-        </section>
+        <!-- AUTHENTICATION VIEW -->
+        <section id="authSection" class="view-section active">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <h2 class="auth-title">Welcome to Short.io</h2>
+                    <p class="auth-subtitle">Enterprise-grade link management.</p>
 
-        <!-- FAQ Section -->
-        <section id="faq" class="container section-padding">
-            <div class="section-header text-center">
-                <h2>Frequently Asked Questions</h2>
-            </div>
-            <div class="faq-list glass-card">
-                <div class="faq-item">
-                    <button class="faq-question">Are the shortened links permanent?</button>
-                    <div class="faq-answer">
-                        <p>Yes! Once you create a link, it will remain active and point to your destination forever, as long as your account is active.</p>
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchAuthTab('login')">Log In</button>
+                        <button class="tab" onclick="switchAuthTab('register')">Create Account</button>
                     </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">Can I choose my own short URL?</button>
-                    <div class="faq-answer">
-                        <p>Absolutely. When shortening a link, simply type your desired text into the "Custom alias" field. If it isn't taken, it's yours!</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">Is the service really free?</button>
-                    <div class="faq-answer">
-                        <p>Yes, basic link shortening and analytics tracking are completely free for all users.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <!-- The Application Section (Dashboard/Login) -->
-        <section id="app" class="container section-padding">
-            <div class="section-header text-center">
-                <h2>Your Dashboard</h2>
-            </div>
-
-            <!-- Auth Section -->
-            <section id="authSection" class="glass-card">
-                <h2>Welcome Back</h2>
-                <p class="subtitle">Enter your credentials to access your dashboard.</p>
-
-                <div class="tabs">
-                    <button class="tab active" onclick="switchAuthTab('login')">Login</button>
-                    <button class="tab" onclick="switchAuthTab('register')">Register</button>
-                </div>
-
-                <form id="authForm">
-                    <div class="input-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" required placeholder="john_doe">
-                    </div>
-                    <div class="input-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" required placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="btn-primary w-full" id="authSubmitBtn">Login</button>
-                </form>
-                <p id="authError" class="error-msg"></p>
-            </section>
-
-            <!-- Dashboard Section -->
-            <section id="dashboardSection" class="hidden">
-                <!-- Analytics Summary -->
-                <div class="stats-grid">
-                    <div class="glass-card stat-card">
-                        <h3>Total Network Clicks</h3>
-                        <p id="totalClicks" class="stat-number">0</p>
-                    </div>
-                    <div class="glass-card stat-card">
-                        <h3>Active Links</h3>
-                        <p id="totalLinks" class="stat-number">0</p>
-                    </div>
-                </div>
-
-                <!-- Shorten Link Tool -->
-                <div class="glass-card mt-6">
-                    <h2>Shorten a Link</h2>
-                    <form id="shortenForm" class="shorten-grid">
-                        <input type="url" id="longUrl" required placeholder="https://very-long-url.com/xyz">
-                        <input type="text" id="customAlias" placeholder="Custom alias (optional)">
-                        <button type="submit" class="btn-primary">Shorten</button>
+                    <form id="authForm">
+                        <div class="input-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" required placeholder="name@company.com">
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn-primary w-full" id="authSubmitBtn">Log In</button>
                     </form>
-                    <p id="shortenError" class="error-msg"></p>
+                    <p id="authError" class="error-msg"></p>
+                </div>
+            </div>
+        </section>
 
-                    <div id="shortenResult" class="hidden result-box">
-                        <p>Your short link is ready:</p>
-                        <a href="#" id="resultLink" target="_blank"></a>
+        <!-- DASHBOARD VIEW -->
+        <section id="dashboardSection" class="view-section hidden">
+            
+            <!-- Core Dashboard -->
+            <div class="dashboard-header">
+                <h2>Overview</h2>
+                <p>Manage your links and track performance.</p>
+            </div>
+
+            <!-- Analytics Summary -->
+            <div class="stats-grid">
+                <div class="saas-card stat-card">
+                    <h3>Total Network Clicks</h3>
+                    <p id="totalClicks" class="stat-number">0</p>
+                </div>
+                <div class="saas-card stat-card">
+                    <h3>Active Links</h3>
+                    <p id="totalLinks" class="stat-number">0</p>
+                </div>
+            </div>
+
+            <!-- Shorten Link Tool -->
+            <div class="saas-card mt-6">
+                <h3 class="card-title">Create New Link</h3>
+                <form id="shortenForm" class="shorten-grid">
+                    <input type="url" id="longUrl" required placeholder="https://very-long-url.com/destination">
+                    <input type="text" id="customAlias" placeholder="Custom alias (optional)">
+                    <button type="submit" class="btn-primary">Shorten</button>
+                </form>
+                <p id="shortenError" class="error-msg"></p>
+
+                <div id="shortenResult" class="hidden result-box">
+                    <p>Your secure link is ready:</p>
+                    <a href="#" id="resultLink" target="_blank"></a>
+                </div>
+            </div>
+
+            <!-- Links Table -->
+            <div class="saas-card mt-6 table-container">
+                <h3 class="card-title">Link History</h3>
+                <table class="links-table">
+                    <thead>
+                        <tr>
+                            <th>Short ID</th>
+                            <th>Original URL</th>
+                            <th>Clicks</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="linksTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Info Section (For Logged In Users) -->
+            <div class="info-section mt-10">
+                <h2 class="section-title">Platform Capabilities</h2>
+                <div class="features-grid">
+                    <div class="saas-card feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h4>Low-Latency Routing</h4>
+                        <p>Powered by an in-memory Redis cache, achieving sub-millisecond URL resolution.</p>
+                    </div>
+                    <div class="saas-card feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4>Real-Time Analytics</h4>
+                        <p>Asynchronous background tasks process click events without blocking traffic.</p>
+                    </div>
+                    <div class="saas-card feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h4>Enterprise Security</h4>
+                        <p>JWT authentication, rigorous rate-limiting, and XSS-protected dashboards.</p>
                     </div>
                 </div>
 
-                <!-- Links Table -->
-                <div class="glass-card mt-6 table-container">
-                    <h2>Your Links</h2>
-                    <table class="links-table">
-                        <thead>
-                            <tr>
-                                <th>Short ID</th>
-                                <th>Original URL</th>
-                                <th>Clicks</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="linksTableBody">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
+                <h2 class="section-title mt-10">Frequently Asked Questions</h2>
+                <div class="saas-card faq-list">
+                    <div class="faq-item">
+                        <button class="faq-question">Are the shortened links permanent?</button>
+                        <div class="faq-answer">
+                            <p>Yes. Links are persistently stored in our PostgreSQL cluster and will remain active indefinitely.</p>
+                        </div>
+                    </div>
+                    <div class="faq-item">
+                        <button class="faq-question">How does custom branding work?</button>
+                        <div class="faq-answer">
+                            <p>You can specify a unique alphanumeric alias during link creation. We also provide auto-generated QR codes optimized for print media.</p>
+                        </div>
+                    </div>
                 </div>
-            </section>
+            </div>
+            
         </section>
+
     </main>
 
     <!-- Footer -->
-    <footer class="glass-footer">
-        <p>&copy; 2026 Short.io. All rights reserved.</p>
+    <footer class="saas-footer">
+        <p>&copy; 2026 Short.io Enterprise. All rights reserved.</p>
     </footer>
 
     <!-- QR Code Modal -->
     <div id="qrModal" class="modal hidden">
-        <div class="modal-content glass-card">
-            <span class="close-btn" onclick="closeQrModal()">&times;</span>
-            <h2>QR Code</h2>
+        <div class="modal-content saas-card">
+            <div class="modal-header">
+                <h3>QR Code Generation</h3>
+                <span class="close-btn" onclick="closeQrModal()">&times;</span>
+            </div>
             <div class="qr-wrapper">
                 <img id="qrImage" src="" alt="QR Code">
             </div>

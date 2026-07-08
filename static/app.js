@@ -43,14 +43,14 @@ function init() {
 }
 
 function showAuth() {
-    authSection.classList.remove("hidden");
-    dashboardSection.classList.add("hidden");
+    authSection.classList.add("active");
+    dashboardSection.classList.remove("active");
     logoutBtn.classList.add("hidden");
 }
 
 function showDashboard() {
-    authSection.classList.add("hidden");
-    dashboardSection.classList.remove("hidden");
+    authSection.classList.remove("active");
+    dashboardSection.classList.add("active");
     logoutBtn.classList.remove("hidden");
     fetchAnalytics();
 }
