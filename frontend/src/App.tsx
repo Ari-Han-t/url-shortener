@@ -281,7 +281,7 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
         const res = await fetch(`${API_BASE}/token`, {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData
+          body: formData.toString()
         })
         const data = await res.json()
         
@@ -290,7 +290,8 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
           toast.success("Welcome back!")
           setToken(data.access_token)
         } else {
-          toast.error(data.message || data.detail || "Login failed")
+          const errMsg = data.message || (typeof data.detail === 'string' ? data.detail : (Array.isArray(data.detail) ? data.detail[0].msg : "Login failed"))
+          toast.error(errMsg)
         }
       } else {
         const res = await fetch(`${API_BASE}/register`, {
@@ -305,7 +306,8 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
           setIsLogin(true)
           setPassword('')
         } else {
-          toast.error(data.message || data.detail || "Registration failed")
+          const errMsg = data.message || (typeof data.detail === 'string' ? data.detail : (Array.isArray(data.detail) ? data.detail[0].msg : "Registration failed"))
+          toast.error(errMsg)
         }
       }
     } catch (err) {

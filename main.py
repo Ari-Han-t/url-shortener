@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundTasks
 from fastapi.responses import RedirectResponse, StreamingResponse, FileResponse, JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -87,6 +88,15 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"success": False, "message": exc.detail}
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    msg = errors[0]["msg"] if errors else "Validation Error"
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": msg}
     )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
