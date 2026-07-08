@@ -50,6 +50,11 @@ def init_db():
         user_agent TEXT
     )''')
     
+    # Performance Indexes
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_urls_long_url ON urls(long_url)''')
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_urls_user_id ON urls(user_id)''')
+    cursor.execute('''CREATE INDEX IF NOT EXISTS idx_click_events_short_id ON click_events(short_id)''')
+    
     conn.commit()
     cursor.close()
     db_pool.putconn(conn)

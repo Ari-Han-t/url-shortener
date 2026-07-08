@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Link, Zap, BarChart2, Shield, Server, 
   MonitorSmartphone, Copy, Search,
-  ChevronDown, ExternalLink, ArrowRight, Share2
+  ChevronDown, ExternalLink, ArrowRight, Share2, ArrowLeft
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 import { Button } from './components/ui/button'
@@ -13,8 +13,11 @@ import { cn } from './lib/utils'
 
 const API_BASE = '' // relative URL since Nginx will proxy
 
+type View = 'home' | 'privacy' | 'terms' | 'cookies' | 'disclaimer'
+
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'))
+  const [view, setView] = useState<View>('home')
 
   useEffect(() => {
     if (token) {
@@ -24,39 +27,70 @@ export default function App() {
     }
   }, [token])
 
+  const renderContent = () => {
+    if (view === 'privacy') return <LegalPage title="Privacy Policy" onBack={() => setView('home')} content="This is a template Privacy Policy. We take your privacy seriously. All data is encrypted and securely stored. We only use strictly necessary cookies to keep you logged in. We do not sell your data." />
+    if (view === 'terms') return <LegalPage title="Terms of Service" onBack={() => setView('home')} content="This is a template Terms of Service. By using Short.io you agree to not shorten links to malicious, illegal, or abusive content. We reserve the right to terminate accounts that violate these terms." />
+    if (view === 'cookies') return <LegalPage title="Cookie Policy" onBack={() => setView('home')} content="This is a template Cookie Policy. We use a single JWT token in your LocalStorage to keep you authenticated. We do not use third-party tracking cookies." />
+    if (view === 'disclaimer') return <LegalPage title="Disclaimer" onBack={() => setView('home')} content="This is a template Disclaimer. Short.io is provided 'as is' without warranties of any kind. We are not responsible for the content of the websites you are redirected to." />
+    
+    return token ? <Dashboard token={token} /> : <LandingPage setToken={setToken} />
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
       <Toaster position="bottom-right" />
-      <Navbar token={token} setToken={setToken} />
+      <Navbar token={token} setToken={setToken} setView={setView} />
       <main className="flex-1 flex flex-col">
-        {token ? <Dashboard token={token} /> : <LandingPage setToken={setToken} />}
+        {renderContent()}
       </main>
-      <Footer />
+      <Footer setView={setView} />
     </div>
   )
 }
 
-function Navbar({ token, setToken }: { token: string | null, setToken: (t: string | null) => void }) {
+function Navbar({ token, setToken, setView }: { token: string | null, setToken: (t: string | null) => void, setView: (v: View) => void }) {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
+        <div 
+          className="flex items-center gap-2 font-bold text-xl tracking-tight cursor-pointer" 
+          onClick={() => setView('home')}
+        >
           <Link className="h-6 w-6 text-primary" />
           <span>Short<span className="text-primary">.io</span></span>
         </div>
         <div className="flex items-center gap-4">
           {!token ? (
-            <a href="#auth" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="#auth" onClick={() => setView('home')} className="text-sm font-medium hover:text-primary transition-colors">
               Sign In
             </a>
           ) : (
-            <Button variant="ghost" size="sm" onClick={() => setToken(null)}>
+            <Button variant="ghost" size="sm" onClick={() => { setToken(null); setView('home') }}>
               Sign Out
             </Button>
           )}
         </div>
       </div>
     </nav>
+  )
+}
+
+function LegalPage({ title, content, onBack }: { title: string, content: string, onBack: () => void }) {
+  return (
+    <div className="container mx-auto max-w-3xl px-4 py-24 flex-1">
+      <Button variant="ghost" className="mb-8" onClick={onBack}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+      </Button>
+      <h1 className="text-4xl font-bold tracking-tight mb-8">{title}</h1>
+      <div className="prose prose-slate dark:prose-invert">
+        <p className="text-lg leading-relaxed text-muted-foreground">{content}</p>
+        <div className="mt-12 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
+          <p className="text-sm text-yellow-600 dark:text-yellow-400 font-medium">
+            Note: This is a placeholder document. You must replace this with a legally binding document before launching the product.
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -111,13 +145,12 @@ function LandingPage({ setToken }: { setToken: (t: string) => void }) {
                 </div>
               </div>
             </div>
-            {/* Decorative blurs */}
             <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-primary/20 blur-[100px] rounded-full"></div>
           </div>
         </div>
       </section>
 
-      {/* Auth Gateway (Instead of standalone URL shortener) */}
+      {/* Auth Gateway */}
       <section id="auth" className="bg-muted/30 border-y border-border py-24">
         <div className="container mx-auto max-w-md px-4">
           <AuthCard setToken={setToken} />
@@ -252,11 +285,12 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
         })
         const data = await res.json()
         
+        // OAuth2 format returns token directly, or error
         if (res.ok) {
           toast.success("Welcome back!")
           setToken(data.access_token)
         } else {
-          toast.error(data.detail || "Login failed")
+          toast.error(data.message || data.detail || "Login failed")
         }
       } else {
         const res = await fetch(`${API_BASE}/register`, {
@@ -266,12 +300,12 @@ function AuthCard({ setToken }: { setToken: (t: string) => void }) {
         })
         const data = await res.json()
         
-        if (res.ok) {
+        if (data.success || res.ok) {
           toast.success("Account created! Please log in.")
           setIsLogin(true)
           setPassword('')
         } else {
-          toast.error(data.detail || "Registration failed")
+          toast.error(data.message || data.detail || "Registration failed")
         }
       }
     } catch (err) {
@@ -336,16 +370,19 @@ function Dashboard({ token }: { token: string }) {
       const res = await fetch(`${API_BASE}/dashboard`, {
         headers: { "Authorization": `Bearer ${token}` }
       })
-      if (res.ok) {
-        const data = await res.json()
+      const respData = await res.json()
+      if (respData.success) {
+        const data = respData.data
         setStats({
           clicks: data["Total Network Clicks"] || 0,
           links: data["Dashboard"]?.length || 0
         })
         setHistory(data["Dashboard"] || [])
+      } else {
+        toast.error(respData.message || "Failed to load dashboard data")
       }
     } catch (e) {
-      toast.error("Failed to load dashboard data")
+      toast.error("Network error while loading dashboard")
     }
   }
 
@@ -369,15 +406,15 @@ function Dashboard({ token }: { token: string }) {
         },
         body: JSON.stringify(payload)
       })
-      const data = await res.json()
+      const respData = await res.json()
       
-      if (res.ok) {
+      if (respData.success) {
         toast.success("Link successfully shortened!")
         setLongUrl('')
         setCustomAlias('')
         fetchDashboard()
       } else {
-        toast.error(data.detail || data.Message || "Failed to shorten link")
+        toast.error(respData.message || respData.detail || "Failed to shorten link")
       }
     } catch (err) {
       toast.error("Network error")
@@ -513,7 +550,7 @@ function Dashboard({ token }: { token: string }) {
   )
 }
 
-function Footer() {
+function Footer({ setView }: { setView: (v: View) => void }) {
   return (
     <footer className="border-t border-border/50 py-12 mt-auto">
       <div className="container mx-auto max-w-6xl px-4 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
@@ -522,10 +559,12 @@ function Footer() {
           <span className="font-semibold text-foreground">Short.io</span>
           <span>&copy; 2026</span>
         </div>
-        <div className="flex gap-6">
-          <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-          <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-          <a href="#" className="hover:text-foreground transition-colors flex items-center gap-1">
+        <div className="flex flex-wrap justify-center gap-6">
+          <button onClick={() => setView('privacy')} className="hover:text-foreground transition-colors cursor-pointer">Privacy Policy</button>
+          <button onClick={() => setView('terms')} className="hover:text-foreground transition-colors cursor-pointer">Terms of Service</button>
+          <button onClick={() => setView('cookies')} className="hover:text-foreground transition-colors cursor-pointer">Cookie Policy</button>
+          <button onClick={() => setView('disclaimer')} className="hover:text-foreground transition-colors cursor-pointer">Disclaimer</button>
+          <a href="#" className="hover:text-foreground transition-colors flex items-center gap-1 ml-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.2c3-.3 6-1.5 6-6.5 0-1.4-.5-2.5-1.5-3.4.1-.3.6-1.6-.1-3.4 0 0-1.2-.4-3.9 1.4a12.3 12.3 0 0 0-7 0C6.2 2.7 5 3.1 5 3.1c-.7 1.8-.2 3.1-.1 3.4-1 .9-1.5 2-1.5 3.4 0 5 3 6.2 6 6.5a4.8 4.8 0 0 0-1 3.2v4"/><path d="M9 18c-4.5 1.5-5-2.5-7-3"/></svg> GitHub
           </a>
         </div>
