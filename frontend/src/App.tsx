@@ -426,8 +426,27 @@ function Dashboard({ token }: { token: string }) {
   }
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-    toast.success("Copied to clipboard")
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text)
+        .then(() => toast.success("Copied to clipboard"))
+        .catch(() => toast.error("Failed to copy link"))
+    } else {
+      const textArea = document.createElement("textarea")
+      textArea.value = text
+      textArea.style.position = "fixed"
+      textArea.style.left = "-999999px"
+      textArea.style.top = "-999999px"
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      try {
+        document.execCommand('copy')
+        toast.success("Copied to clipboard")
+      } catch (err) {
+        toast.error("Failed to copy link")
+      }
+      textArea.remove()
+    }
   }
 
   const filteredHistory = history.filter(h => 
