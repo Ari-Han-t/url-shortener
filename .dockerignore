@@ -4,3 +4,8 @@ frontend/node_modules
 venv
 __pycache__
 *.pyc
+.venv
+tests
+.pytest_cache
+frontend/dist
+data

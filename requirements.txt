@@ -11,3 +11,5 @@ psycopg2-binary
 redis
 Pillow==10.2.0
 user-agents
+mcp==1.30.0
+maxminddb==2.8.2

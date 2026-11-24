@@ -11,3 +11,10 @@ __pycache__/
 # IDEs
 .vscode/
 .idea/
+.venv/
+
+# local dev: password for the hop_dev database (never commit)
+.dev-db-password
+
+# Local GeoIP database (DB-IP City Lite, CC BY 4.0). Download with scripts/update_geoip.sh
+data/*.mmdb

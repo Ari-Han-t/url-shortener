@@ -8,7 +8,10 @@ load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-SECRET_KEY = os.getenv("SECRET_KEY", "my_super_secret_key")
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+# Signs login tokens. A missing or guessable key would let anyone forge a session, so refuse to start.
+if len(SECRET_KEY) < 32:
+    raise RuntimeError("SECRET_KEY must be set to a random value of at least 32 characters")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
 def get_password_hash(password: str) -> str:
